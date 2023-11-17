@@ -1,10 +1,15 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, Dimensions, Alert } from 'react-native';
 import MapView, { Marker, Callout, Circle } from 'react-native-maps';
 import { PermissionsAndroid } from 'react-native';
 
 const MapComponent = () => {
-  const [pin, setPin] = useState({
+  const [departure, setDeparture] = useState({
+    latitude: 37.78825,
+    longitude: -122.4324,
+  });
+
+  const [arrival, setArrival] = useState({
     latitude: 37.78825,
     longitude: -122.4324,
   });
@@ -17,7 +22,6 @@ const MapComponent = () => {
   });
 
   useEffect(() => {
-    // Request location permission when the component mounts
     requestLocationPermission();
   }, []);
 
@@ -43,41 +47,73 @@ const MapComponent = () => {
     }
   }, []);
 
-  const handleDragStart = useCallback((e) => {
-    console.log('Drag start', e.nativeEvent.coordinate);
-  }, []);
+  const handleDragEnd = useCallback(
+    (e, locationType) => {
+      const newLocation = {
+        latitude: e.nativeEvent.coordinate.latitude,
+        longitude: e.nativeEvent.coordinate.longitude,
+      };
 
-  const handleDragEnd = useCallback((e) => {
-    setPin({
-      latitude: e.nativeEvent.coordinate.latitude,
-      longitude: e.nativeEvent.coordinate.longitude,
-    });
-  }, []);
+      if (locationType === 'departure') {
+        setDeparture(newLocation);
+      } else if (locationType === 'arrival') {
+        setArrival(newLocation);
+      }
+
+      showAlert();
+    },
+    [setDeparture, setArrival]
+  );
+
+  const handleMapPress = useCallback(
+    (e) => {
+      setArrival({
+        latitude: e.nativeEvent.coordinate.latitude,
+        longitude: e.nativeEvent.coordinate.longitude,
+      });
+
+      showAlert();
+    },
+    [setArrival]
+  );
+
+  const showAlert = () => {
+    Alert.alert(
+      'Chosen Locations',
+      `Departure: ${departure.latitude}, ${departure.longitude}\nArrival: ${arrival.latitude}, ${arrival.longitude}`
+    );
+  };
 
   return (
     <View style={{ marginTop: 0, flex: 1 }}>
       <MapView
         style={styles.map}
-        initialRegion={{
-          latitude: 37.78825,
-          longitude: -122.4324,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}
+        initialRegion={region}
+        onPress={(e) => handleMapPress(e)}
       >
-        <Marker coordinate={{ latitude: region.latitude, longitude: region.longitude }} />
         <Marker
-          coordinate={pin}
-          pinColor="black"
+          coordinate={departure}
+          pinColor="blue"
           draggable={true}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
+          onDragEnd={(e) => handleDragEnd(e, 'departure')}
         >
           <Callout>
-            <Text>My location</Text>
+            <Text>Departure</Text>
           </Callout>
         </Marker>
-        <Circle center={pin} radius={1000} />
+
+        <Marker
+          coordinate={arrival}
+          pinColor="red"
+          draggable={true}
+          onDragEnd={(e) => handleDragEnd(e, 'arrival')}
+        >
+          <Callout>
+            <Text>Arrival</Text>
+          </Callout>
+        </Marker>
+
+        <Circle center={arrival} radius={1000} />
       </MapView>
     </View>
   );
