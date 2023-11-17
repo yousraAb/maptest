@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import * as Location from 'expo-location';
 
@@ -28,23 +28,35 @@ const FloatingForm = () => {
     }
   }, []);
 
+  const handlePlaceSelect = useCallback((data, details, inputType) => {
+    const placeName = details.description;
+    
+    if (inputType === 'departure') {
+      setDeparture(placeName);
+    } else if (inputType === 'arrival') {
+      setArrival(placeName);
+    }
+
+    showAlert();
+  }, []);
+
+  const showAlert = () => {
+    Alert.alert(
+      'Chosen Locations',
+      `Departure: ${departure}\nArrival: ${arrival}`
+    );
+  };
+
   return (
     <View style={styles.container}>
       <GooglePlacesAutocomplete
         placeholder="Departure"
         fetchDetails={true}
-        GooglePlacesSearchQuery={{
-          rankby: 'distance',
-        }}
-        onPress={(data, details = null) => {
-          console.log('Departure:', data, details);
-          setDeparture(data.description);
-        }}
+        onPress={(data, details) => {console.log('Departure:', data, details); handlePlaceSelect(data, details, 'departure')}}
         query={{
           key: apiKey,
           language: 'en',
           components: 'country:us',
-          // types: 'establishment',
         }}
         styles={{
           container: styles.inputContainer,
@@ -56,18 +68,11 @@ const FloatingForm = () => {
       <GooglePlacesAutocomplete
         placeholder="Arrival"
         fetchDetails={true}
-        GooglePlacesSearchQuery={{
-          rankby: 'distance',
-        }}
-        onPress={(data, details = null) => {
-          console.log('Arrival:', data, details);
-          setArrival(data.description);
-        }}
+        onPress={(data, details) => handlePlaceSelect(data, details, 'arrival')}
         query={{
           key: apiKey,
           language: 'en',
           components: 'country:us',
-          // types: 'establishment',
         }}
         styles={{
           container: [styles.inputContainer, styles.arrivalInputContainer],
@@ -75,9 +80,6 @@ const FloatingForm = () => {
           listView: styles.suggestionList,
         }}
       />
-
-      {/* Add your search button or other UI elements here */}
-
     </View>
   );
 };
@@ -92,11 +94,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     elevation: 3,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
   },
   inputContainer: {
     flex: 0,
@@ -117,7 +114,7 @@ const styles = StyleSheet.create({
   },
   suggestionList: {
     backgroundColor: 'white',
-    zIndex: 2, 
+    zIndex: 2,
   },
 });
 

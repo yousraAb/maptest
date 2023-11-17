@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Dimensions, Alert } from 'react-native';
 import MapView, { Marker, Callout, Circle } from 'react-native-maps';
-import { PermissionsAndroid } from 'react-native';
+import Geocoder from 'react-native-geocoding';
 
 const MapComponent = () => {
   const [departure, setDeparture] = useState({
@@ -22,33 +22,11 @@ const MapComponent = () => {
   });
 
   useEffect(() => {
-    requestLocationPermission();
-  }, []);
-
-  const requestLocationPermission = useCallback(async () => {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Location Permission',
-          message: 'App needs access to your location',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        },
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Location permission granted');
-      } else {
-        console.log('Location permission denied');
-      }
-    } catch (err) {
-      console.warn(err);
-    }
+    Geocoder.init('AIzaSyBvWMRC1y9vyGNtNMVvVAnakhNFYr5qsGc');
   }, []);
 
   const handleDragEnd = useCallback(
-    (e, locationType) => {
+    async (e, locationType) => {
       const newLocation = {
         latitude: e.nativeEvent.coordinate.latitude,
         longitude: e.nativeEvent.coordinate.longitude,
@@ -77,11 +55,31 @@ const MapComponent = () => {
     [setArrival]
   );
 
-  const showAlert = () => {
-    Alert.alert(
-      'Chosen Locations',
-      `Departure: ${departure.latitude}, ${departure.longitude}\nArrival: ${arrival.latitude}, ${arrival.longitude}`
-    );
+  const showAlert = async () => {
+    try {
+      const [departureName, arrivalName] = await Promise.all([
+        getPlaceName(departure.latitude, departure.longitude),
+        getPlaceName(arrival.latitude, arrival.longitude),
+      ]);
+
+      Alert.alert(
+        'Chosen Locations',
+        `Departure: ${departureName}\nArrival: ${arrivalName}`
+      );
+    } catch (error) {
+      console.error('Error fetching place names:', error);
+    }
+  };
+
+  const getPlaceName = async (latitude, longitude) => {
+    try {
+      const response = await Geocoder.from(latitude, longitude);
+      const address = response.results[0].formatted_address;
+      return address;
+    } catch (error) {
+      console.error('Error fetching place name:', error);
+      return 'Unknown Place';
+    }
   };
 
   return (
