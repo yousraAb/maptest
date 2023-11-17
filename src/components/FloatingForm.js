@@ -37,7 +37,6 @@ const FloatingForm = () => {
           rankby: 'distance',
         }}
         onPress={(data, details = null) => {
-          // 'details' is provided when fetchDetails = true
           console.log('Departure:', data, details);
           setDeparture(data.description);
         }}
@@ -61,7 +60,6 @@ const FloatingForm = () => {
           rankby: 'distance',
         }}
         onPress={(data, details = null) => {
-          // 'details' is provided when fetchDetails = true
           console.log('Arrival:', data, details);
           setArrival(data.description);
         }}

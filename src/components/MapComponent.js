@@ -74,7 +74,7 @@ const MapComponent = () => {
           onDragEnd={handleDragEnd}
         >
           <Callout>
-            <Text>I'm here</Text>
+            <Text>My location</Text>
           </Callout>
         </Marker>
         <Circle center={pin} radius={1000} />
